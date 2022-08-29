@@ -1,3 +1,10 @@
+'''
+1.  Here, **path** represents, where the unzipped files will be saved using the unzip.py file
+2.  **outpath** represents, where the subset images will be saved in TIF format.
+3.  **district_shapefile** represents, the directory name where the AOI shapefile is input by the user.
+
+'''
+
 import datetime
 import os,gc
 import time
@@ -17,7 +24,10 @@ import pygeoif
 path='preprocessing'
 outpath='raw_mosaic'
 
-
+for file in os.listdir('district_shapefile'):
+        if file.endswith('.shp'):
+                shapefile_name=os.path.splitext(file)[0]
+                
 def do_subset(source, wkt):
     print('\tSubsetting...')
     parameters = HashMap()
@@ -47,11 +57,10 @@ def main():
 
         
 
-        subsetVH = do_subset(sentinel_1, wkt)
+        subset = do_subset(sentinel_1, wkt)
 
         
-        ProductIO.writeProduct(subsetVH, outpath+'//'+folder+"VH", 'GeoTIFF-BigTIFF')
-        #ProductIO.writeProduct(subsetVV, outpath+'//'+"s1_preprocessed"+folder+"VV", 'GeoTIFF-BigTIFF')
+        ProductIO.writeProduct(subset, outpath+'//subset'+folder, 'GeoTIFF-BigTIFF')
 
         sentinel_1.dispose()
         sentinel_1.closeIO()
