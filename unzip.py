@@ -1,3 +1,11 @@
+'''
+
+python provides a shetial package to unzip the files reading from a input directory to the output directory.
+This is a mini script to extract all the zip-files to the required path.
+This step is important because python do not have the ability to directly read the zip files, hence it is required to be unziped before read.
+
+'''
+
 import zipfile
 import os
 i=1
