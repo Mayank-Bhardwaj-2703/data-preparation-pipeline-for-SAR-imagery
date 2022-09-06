@@ -112,6 +112,15 @@ def do_speckle_filtering(source):
     return output
 
 
+def do_calibration(source):
+    print('\tCalibration...')
+    parameters = HashMap()
+    parameters.put('outputSigmaBand', True)
+    
+    parameters.put('outputImageScaleInDb', True)
+    output = GPF.createProduct("Calibration", parameters, source)
+    return output
+
 ##MAIN function
 def main():
     
@@ -165,12 +174,15 @@ def main():
 
         
         ## Start preprocessing and subsetting:
+            
         thermaremovedVH = do_thermal_noise_removal_for_VH(sentinel_1, polarizationVH, polsVH)
         thermaremovedVV = do_thermal_noise_removal_for_VV(sentinel_1, polarizationVV, polsVV)
-        
-        down_filteredVH = do_speckle_filtering(thermalremovedVH)
-        down_filteredVV = do_speckle_filtering(thermalremovedVV)
 
+        calibratedVH = do_calibration(thermaremovedVH)
+        calibratedVV = do_calibration(thermaremovedVV)
+        
+        down_filteredVH = do_speckle_filtering(calibratedVH)
+        down_filteredVV = do_speckle_filtering(calibratedVV)
         
         ProductIO.writeProduct(down_filteredVH, outpath+'//'+"s1_preprocessed"+folder+"VH", 'GeoTIFF-BigTIFF')
         ProductIO.writeProduct(down_filteredVV, outpath+'//'+"s1_preprocessed"+folder+"VV", 'GeoTIFF-BigTIFF')
