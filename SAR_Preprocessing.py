@@ -48,7 +48,7 @@ print(os.getcwd())
 ## defing the input and output paths for the Preprocessed images through config file named "preprocessing_config.ini".
 path = config['input_and_output_paths']['input_path']
 outpath = config['input_and_output_paths']['output_path']
-AOIpath='district_shapefile'
+AOIpath=config['input_and_output_paths']['AOIshapefileDirectory']
 #####################
 for file in os.listdir(AOIpath):
         if file.endswith('.shp'):
@@ -121,6 +121,31 @@ def do_calibration(source):
     output = GPF.createProduct("Calibration", parameters, source)
     return output
 
+def do_terrain_correction(source):
+    print('\tTerrain correction...')
+    parameters=HashMap()
+    parameters.put("Source Bands","Sigma0_VH,Sigma0_VV")
+    parameters.put("demName",config['terrain_correction']['demName'])
+    parameters.put("DEM Resampling Method",config['terrain_correction']['demResampling'])
+    parameters.put("Image Resampling Method",config['terrain_correction']['imageResampling'])
+    parameters.put("Pixel Spacing (m)",10.0)
+    parameters.put("Pixel Spacing (deg)",0.0000898315284119)
+    parameters.put("Map Projection",config['terrain_correction']['mapProjection'])
+    parameters.put("Mask out areas without elevation",True)
+    parameters.put("Selected source band",True)
+    
+    output = GPF.createProduct('Terrain-Correction', parameters, source)
+    return output
+
+def do_subset(source, wkt):
+    print('\tSubsetting...')
+    parameters = HashMap()
+    parameters.put('geoRegion', wkt)
+    output = GPF.createProduct('Subset', parameters, source)
+    return output
+
+
+  
 ##MAIN function
 def main():
     
@@ -184,14 +209,21 @@ def main():
         down_filteredVH = do_speckle_filtering(calibratedVH)
         down_filteredVV = do_speckle_filtering(calibratedVV)
         
-        ProductIO.writeProduct(down_filteredVH, outpath+'//'+"s1_preprocessed"+folder+"VH", 'GeoTIFF-BigTIFF')
-        ProductIO.writeProduct(down_filteredVV, outpath+'//'+"s1_preprocessed"+folder+"VV", 'GeoTIFF-BigTIFF')
+        product_preprocessedVH = do_terrain_correction(down_filteredVH)
+        product_preprocessedVV = do_terrain_correction(down_filteredVV)
+
+        subsetVH = do_subset(product_preprocessedVH, wkt)
+        subsetVV = do_subset(product_preprocessedVV, wkt)
         
+        ProductIO.writeProduct(subsetVH, outpath+'//'+"s1_preprocessed"+folder+"VH", 'GeoTIFF-BigTIFF')
+        ProductIO.writeProduct(subsetVV, outpath+'//'+"s1_preprocessed"+folder+"VV", 'GeoTIFF-BigTIFF')
+
         ## dump and dispose the final output image in (.tif) format in the outuput directory.
         sentinel_1.dispose()
         sentinel_1.closeIO()
         print("--- %s seconds ---" % (time.time() - start_time))
         
+
 
             
 if __name__== "__main__":
@@ -212,10 +244,5 @@ if __name__== "__main__":
     main()
     
     
-'''
 
-Put the AOI shapefile in a directory with name, "district_shapefile" in the same path as working directory.
-This is just for temperary purpose, After project completion, it will be automated for user convenience and all the respective instructions will be cleared accordingly.
-
-'''
     
